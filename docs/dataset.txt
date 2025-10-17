@@ -1,0 +1,1 @@
+dataset link: https://www.kaggle.com/datasets/bcccdatasets/malicious-dns-and-attacks-bccc-cic-bell-dns-2024?resource=download

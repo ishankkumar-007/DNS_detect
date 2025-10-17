@@ -1,0 +1,141 @@
+# DNS Spoofing Detection Configuration
+# Project: Real-Time DNS Threat Analysis using LightGBM
+
+# Data Configuration
+data:
+  dataset_path: "BCCC-CIC-Bell-DNS-2024"
+  exf_dir: "BCCC-CIC-Bell-DNS-2024/BCCC-CIC-Bell-DNS-EXF"
+  mal_dir: "BCCC-CIC-Bell-DNS-2024/BCCC-CIC-Bell-DNS-Mal"
+  use_dask: true  # Use Dask for files >50MB
+  sample_fraction: null  # Set to 0.1 for 10% sample (testing), null for full dataset
+  test_size: 0.2  # Train/test split ratio
+  validation_size: 0.1  # Validation set size (from training data)
+
+# Preprocessing Configuration
+preprocessing:
+  handle_missing: true
+  drop_identifiers: true  # Drop flow_id, timestamp, IPs, ports
+  encode_categorical: true
+  fill_strategy: "zero"  # Strategy for numeric missing values
+
+# Feature Selection Configuration
+feature_selection:
+  enable: true
+  method: "hybrid"  # hybrid, selectkbest, or none
+  selectkbest:
+    k: 50  # Number of features to select
+    score_func: "mutual_info"  # mutual_info, chi2, or f_classif
+  shap:
+    top_n: 30  # Final number of features after SHAP analysis
+    sample_size: 1000  # Sample size for SHAP calculation (speed optimization)
+
+# LightGBM Model Configuration
+model:
+  # Core parameters
+  objective: "multiclass"  # Will be auto-adjusted based on data
+  boosting_type: "gbdt"
+  metric: "multi_logloss"
+  
+  # Tree parameters
+  num_leaves: 31
+  max_depth: -1  # No limit
+  min_child_samples: 20
+  min_child_weight: 0.001
+  
+  # Learning parameters
+  learning_rate: 0.05
+  n_estimators: 500
+  early_stopping_rounds: 50
+  
+  # Regularization
+  reg_alpha: 0.1  # L1 regularization
+  reg_lambda: 0.1  # L2 regularization
+  
+  # Sampling parameters
+  subsample: 0.8  # Row sampling
+  colsample_bytree: 0.8  # Column sampling
+  bagging_fraction: 0.8
+  bagging_freq: 5
+  feature_fraction: 0.9
+  
+  # Performance
+  n_jobs: -1  # Use all CPU cores
+  verbose: -1  # Suppress warnings
+  random_state: 42
+
+# Training Configuration
+training:
+  stratify_split: true
+  cross_validation: false  # Enable for k-fold CV
+  cv_folds: 5
+  class_weight: "balanced"  # Handle imbalanced classes
+  
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+    - "confusion_matrix"
+  
+  # Plot generation flags
+  plot_confusion_matrix: true
+  plot_feature_importance: true
+  plot_roc_curve: true
+  plot_shap_summary: true
+  
+  # Display control
+  show_plots: false  # Set to true to display plots interactively (plt.show())
+  save_plots: true   # Set to false to skip saving plots to disk
+
+# Real-Time Detection Configuration
+realtime:
+  latency_target_ms: 100  # Target inference latency
+  batch_size: 1  # Single flow prediction
+  measure_performance: true
+  log_malicious: true
+
+# Output Configuration
+output:
+  models_dir: "models"
+  results_dir: "results"
+  plots_dir: "results/plots"
+  metrics_dir: "results/metrics"
+  logs_dir: "logs"
+  cache_dir: "cache"  # Cache for preprocessed data
+  
+  # Model saving
+  model_name: "dns_spoofing_detector"
+  save_best_model: true
+  
+  # Results saving
+  save_predictions: true
+  save_metrics: true
+  save_plots: true
+  
+  # Caching options
+  cache_preprocessed: true  # Cache preprocessed features
+  cache_selected_features: true  # Cache selected features
+  use_cache: true  # Use cached data if available
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_file: "logs/training.log"
+  console_output: true
+
+# Experiment Configuration
+experiment:
+  name: "dns_spoofing_detection_v1"
+  description: "LightGBM with hybrid feature selection (SelectKBest + SHAP)"
+  tags:
+    - "lightgbm"
+    - "dns-spoofing"
+    - "hybrid-feature-selection"
+    - "real-time-detection"
+  
+  # Reproducibility
+  random_seed: 42
+  deterministic: true
