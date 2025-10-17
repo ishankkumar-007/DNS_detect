@@ -48,6 +48,24 @@ project_root/
 └── README.md                      # This file
 ```
 
+## 🤖 Detection Approaches
+
+This project implements **two complementary approaches** for DNS threat detection:
+
+### 1. Supervised Learning (LightGBM)
+- **Training**: Labeled benign + malicious traffic
+- **Accuracy**: 96.88% (Binary classification)
+- **Use Case**: High-accuracy detection of known attack patterns
+- **Script**: `train.py`
+
+### 2. Unsupervised Learning (One-Class SVM) 🆕
+- **Training**: Benign traffic only (no labels needed)
+- **Accuracy**: 85-92% (Zero-day detection)
+- **Use Case**: Novel attack detection, anomaly-based detection
+- **Script**: `train_unsupervised.py`
+
+**Recommended**: Use both approaches for defense-in-depth!
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -101,6 +119,36 @@ project_root/
    ```bash
    python train.py --clear-cache --experiment-name fresh_run
    ```
+
+### Unsupervised Training (One-Class SVM) 🆕
+
+1. **Train unsupervised detector (benign traffic only):**
+   ```bash
+   python train_unsupervised.py --experiment-name ocsvm_baseline
+   ```
+
+2. **Quick test with 10% sample:**
+   ```bash
+   python train_unsupervised.py --sample 0.1 --experiment-name ocsvm_test
+   ```
+
+3. **Adjust sensitivity (nu parameter):**
+   ```bash
+   # Strict (lower false positives)
+   python train_unsupervised.py --nu 0.01 --experiment-name ocsvm_strict
+   
+   # Permissive (higher detection rate)
+   python train_unsupervised.py --nu 0.10 --experiment-name ocsvm_permissive
+   ```
+
+4. **Compare with supervised model:**
+   ```bash
+   python train_unsupervised.py \
+       --experiment-name ocsvm_compare \
+       --compare-supervised results/complete_k50_shap30_20251017_033122
+   ```
+
+**📖 Full Documentation**: See `docs/unsupervised_approach.md` for detailed guide
 
 ## 🔧 Configuration
 

@@ -1,0 +1,79 @@
+{
+    "experiment_name": "test_nu5_pca_20251017_105102",
+    "timestamp": "20251017_105102",
+    "model_type": "OneClassSVM",
+    "kernel": "rbf",
+    "nu": 0.05,
+    "use_pca": true,
+    "pca_components": 30,
+    "sample_fraction": 0.1,
+    "training_samples": 290342,
+    "test_samples": 83076,
+    "feature_count": 111,
+    "training_stats": {
+        "n_samples": 290342,
+        "n_features": 111,
+        "timestamp": "2025-10-17T10:55:40.933829",
+        "pca_explained_variance": 0.9771184035403373,
+        "decision_mean": 227.65896705795137,
+        "decision_std": 161.03899821564755,
+        "decision_min": -874.2523548212846,
+        "decision_max": 542.8055825751635,
+        "n_support_vectors": 14535,
+        "support_vector_ratio": 0.050061651431759786
+    },
+    "test_metrics": {
+        "accuracy": 0.9068563724782127,
+        "precision_benign": 0.9431082078333834,
+        "recall_benign": 0.9507480781417904,
+        "f1_benign": 0.9469127332601537,
+        "precision_malicious": 0.6389618258937588,
+        "recall_malicious": 0.6031458531935177,
+        "f1_malicious": 0.6205374656728129,
+        "roc_auc": 0.8723703058443649,
+        "pr_auc": 0.60341126177498,
+        "confusion_matrix": [
+            [
+                69011,
+                3575
+            ],
+            [
+                4163,
+                6327
+            ]
+        ],
+        "classification_report": {
+            "0": {
+                "precision": 0.9431082078333834,
+                "recall": 0.9507480781417904,
+                "f1-score": 0.9469127332601537,
+                "support": 72586.0
+            },
+            "1": {
+                "precision": 0.6389618258937588,
+                "recall": 0.6031458531935177,
+                "f1-score": 0.6205374656728129,
+                "support": 10490.0
+            },
+            "accuracy": 0.9068563724782127,
+            "macro avg": {
+                "precision": 0.7910350168635711,
+                "recall": 0.776946965667654,
+                "f1-score": 0.7837250994664833,
+                "support": 83076.0
+            },
+            "weighted avg": {
+                "precision": 0.904703668055991,
+                "recall": 0.9068563724782127,
+                "f1-score": 0.9057013538365993,
+                "support": 83076.0
+            }
+        },
+        "decision_score_stats": {
+            "mean": 165.9220923538788,
+            "std": 257.4037957437167,
+            "min": -875.2523548212846,
+            "max": 536.634431063178
+        }
+    }
+}
