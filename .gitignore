@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Cache
+cache*/
+.cache/
+*.pkl
+*.pickle
+
+# Models (optional - uncomment if models are large)
+# models/
+# *.txt
+# *.joblib
+
+# Results (optional - uncomment to exclude from git)
+# results/
+# *.png
+# *.jpg
+# *.pdf
+
+.github/
+# Dataset (large files)
+BCCC-CIC-Bell-DNS-2024/
+*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+.cache/
+
+# Distribution / packaging
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+
+# Others
+prompt.txt
+test.md
