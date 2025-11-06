@@ -1,0 +1,89 @@
+{
+    "experiment_name": "iforest_20_complete_n100_cont5_20251106_212246",
+    "timestamp": "20251106_212246",
+    "model_type": "IsolationForest",
+    "n_estimators": 100,
+    "contamination": 0.05,
+    "max_samples": "auto",
+    "max_features": 1.0,
+    "sample_fraction": null,
+    "training_samples": 2903547,
+    "test_samples": 830753,
+    "feature_count": 111,
+    "training_stats": {
+        "n_samples": 2903547,
+        "n_features": 20,
+        "timestamp": "2025-11-06T21:23:30.448274",
+        "anomaly_score_mean": -0.43235891140456123,
+        "anomaly_score_std": 0.05694663065613151,
+        "anomaly_score_min": -0.7314083788979239,
+        "anomaly_score_max": -0.3542789261479694,
+        "decision_mean": 0.11184276308290485,
+        "decision_std": 0.05694663065613151,
+        "decision_min": -0.18720670441045784,
+        "decision_max": 0.18992274833949663,
+        "offset": -0.544201674487466,
+        "n_outliers_in_training": 145178,
+        "outlier_ratio_training": 0.050000223864122055
+    },
+    "test_metrics": {
+        "accuracy": 0.9236006370124453,
+        "precision_benign": 0.9620571026793562,
+        "recall_benign": 0.9500321675412289,
+        "f1_benign": 0.9560068233126615,
+        "precision_malicious": 0.6816629951114193,
+        "recall_malicious": 0.7406404363664104,
+        "f1_malicious": 0.7099289321542013,
+        "roc_auc": 0.8698444354532447,
+        "pr_auc": 0.6289395872536117,
+        "confusion_matrix": [
+            [
+                689616,
+                36271
+            ],
+            [
+                27198,
+                77668
+            ]
+        ],
+        "classification_report": {
+            "0": {
+                "precision": 0.9620571026793562,
+                "recall": 0.9500321675412289,
+                "f1-score": 0.9560068233126615,
+                "support": 725887.0
+            },
+            "1": {
+                "precision": 0.6816629951114193,
+                "recall": 0.7406404363664104,
+                "f1-score": 0.7099289321542013,
+                "support": 104866.0
+            },
+            "accuracy": 0.9236006370124453,
+            "macro avg": {
+                "precision": 0.8218600488953878,
+                "recall": 0.8453363019538196,
+                "f1-score": 0.8329678777334314,
+                "support": 830753.0
+            },
+            "weighted avg": {
+                "precision": 0.926662938006801,
+                "recall": 0.9236006370124453,
+                "f1-score": 0.9249443966536869,
+                "support": 830753.0
+            }
+        },
+        "anomaly_score_stats": {
+            "mean": -0.4491646020514431,
+            "std": 0.07535181295775412,
+            "min": -0.7299253018518805,
+            "max": -0.3541854389239783
+        },
+        "decision_score_stats": {
+            "mean": 0.09503707243602291,
+            "std": 0.07535181295775412,
+            "min": -0.1857236273644145,
+            "max": 0.19001623556348773
+        }
+    }
+}
