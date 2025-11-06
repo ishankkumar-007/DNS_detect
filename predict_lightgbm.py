@@ -10,7 +10,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
-from real_time_detection import RealTimeDNSDetector
+from real_time_detection_lightgbm import RealTimeDNSDetector
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -93,9 +93,18 @@ def batch_inference(detector, input_path, output_path=None, max_flows=None):
     # Performance stats
     perf_stats = detector.get_performance_stats()
     logger.info(f"\nPerformance:")
-    logger.info(f"  Average latency: {perf_stats['avg_latency_ms']:.2f}ms")
-    logger.info(f"  P95 latency: {perf_stats['p95_latency_ms']:.2f}ms")
-    logger.info(f"  Meets <100ms SLA: {perf_stats['meets_sla']}")
+    if 'avg_latency_ms' in perf_stats:
+        logger.info(f"  Average latency: {perf_stats['avg_latency_ms']:.2f}ms")
+        logger.info(f"  P95 latency: {perf_stats['p95_latency_ms']:.2f}ms")
+        logger.info(f"  Meets <100ms SLA: {perf_stats['meets_sla']}")
+    else:
+        # Calculate from batch results
+        if 'latency_ms' in results_df.columns:
+            avg_latency = results_df['latency_ms'].mean()
+            logger.info(f"  Average latency per flow: {avg_latency:.2f}ms")
+            logger.info(f"  Meets <100ms SLA: {avg_latency < 100}")
+        else:
+            logger.info(f"  {perf_stats.get('message', 'No performance data available')}")
     logger.info("="*60)
     
     # Save results
@@ -115,7 +124,7 @@ def stream_inference(detector, input_path, max_flows=None):
         input_path: Path to input CSV
         max_flows: Maximum flows to process
     """
-    from real_time_detection import DNSFlowSimulator
+    from real_time_detection_lightgbm import DNSFlowSimulator
     
     # Create flow generator
     simulator = DNSFlowSimulator(input_path)
