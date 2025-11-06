@@ -1,0 +1,56 @@
+# Base Configuration for DNS Spoofing Detection Project
+# Shared settings across all models
+
+# Data Configuration
+data:
+  dataset_path: "BCCC-CIC-Bell-DNS-2024"
+  exf_dir: "BCCC-CIC-Bell-DNS-2024/BCCC-CIC-Bell-DNS-EXF"
+  mal_dir: "BCCC-CIC-Bell-DNS-2024/BCCC-CIC-Bell-DNS-Mal"
+  use_dask: true
+  sample_fraction: null  # null for full dataset, 0.1 for 10% sample
+  test_size: 0.2
+  validation_size: 0.1
+  random_state: 42
+
+# Preprocessing Configuration (shared by all models)
+preprocessing:
+  handle_missing: true
+  drop_identifiers: true
+  encode_categorical: true
+  fill_strategy: "zero"
+
+# Output Configuration
+output:
+  models_dir: "models"
+  results_dir: "results"
+  logs_dir: "logs"
+  # cache_dir: "cache --sample_0.1"
+  cache_dir: "cache torch"
+  use_cache: true
+  save_plots: true
+  show_plots: false
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  console_output: true
+
+# Experiment Configuration
+experiment:
+  random_seed: 42
+  deterministic: true
+
+# Model Configuration (shared defaults)
+model:
+  random_state: 42
+
+# Feature Selection Configuration
+feature_selection:
+  enable: true
+  method: "hybrid"  # hybrid, selectkbest, or none
+  selectkbest:
+    k: 50  # Number of features to select
+    score_func: "mutual_info"  # mutual_info, chi2, or f_classif
+  shap:
+    top_n: 20  # Final number of features after SHAP analysis
+    sample_size: 1000  # Sample size for SHAP calculation (speed optimization)

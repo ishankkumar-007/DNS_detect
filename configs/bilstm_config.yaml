@@ -1,0 +1,63 @@
+# BiLSTM Deep Learning Configuration
+
+model_type: "bilstm"
+model_name: "bilstm_detector"
+
+# Sequence Preparation
+sequence:
+  sequence_length: 50  # Number of flows per sequence
+  step_size: 10  # Sliding window step
+  padding: "post"  # 'pre' or 'post'
+  truncating: "post"  # 'pre' or 'post'
+
+# BiLSTM Architecture - Two Layer Configuration
+bilstm:
+  # Layer 1: BiLSTM with Nadam optimizer
+  layer1:
+    lstm_units: 30  # Hidden neurons
+    dropout: 0.2
+    activation: "tanh"
+    optimizer: "nadam"
+    learning_rate: 0.001
+    batch_size: 80
+    epochs: 100
+    return_sequences: true  # Must return sequences for Layer 2
+    bidirectional: true
+  
+  # Layer 2: BiLSTM with Adam optimizer
+  layer2:
+    lstm_units: 30  # Hidden neurons
+    dropout: 0.0  # No dropout in Layer 2
+    activation: "tanh"
+    optimizer: "adam"
+    learning_rate: 0.01
+    batch_size: 80
+    epochs: 100
+    return_sequences: false  # Final layer outputs fixed-size embedding
+    bidirectional: true
+
+# Training Configuration
+training:
+  stratify_split: true
+  validation_split: 0.2
+  early_stopping:
+    monitor: "val_loss"
+    patience: 15
+    restore_best_weights: true
+  
+  # Combined training approach (train each layer separately, then fine-tune)
+  layer_wise_training: true  # Train Layer 1, then Layer 2, then fine-tune together
+
+  # Evaluation
+  evaluation:
+    metrics:
+      - "adjusted_rand_score"  # If labels available
+      - "homogeneity_score"
+      - "completeness_score"
+      - "v_measure_score"
+    
+    plot_types:
+      - "tsne_visualization"
+      - "embedding_space"
+      - "loss_curves"
+      - "confusion_matrix"

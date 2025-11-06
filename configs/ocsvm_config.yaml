@@ -1,0 +1,42 @@
+# One-Class SVM Unsupervised Anomaly Detection Configuration
+
+# Model-specific settings
+model_type: "one_class_svm"
+model_name: "ocsvm_detector"
+
+# One-Class SVM Parameters
+ocsvm:
+  kernel: "rbf"  # rbf, linear, poly, sigmoid
+  nu: 0.05  # Expected fraction of outliers (0.01-0.10)
+  gamma: "scale"  # Kernel coefficient (scale, auto, or float)
+  
+# Dimensionality Reduction
+dimensionality_reduction:
+  use_pca: 
+  n_components: 20
+  explained_variance_target: 0.95
+
+# Training specific
+training:
+  train_on_benign_only: true  # Critical: only use benign data
+  contamination_estimate: 0.05
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+    - "pr_auc"
+  
+  generate_plots:
+    - "confusion_matrix"
+    - "roc_curve"
+    - "pr_curve"
+    - "decision_distribution"
+    - "anomaly_scores"
+
+# Inherit from base config
+# Use: python scripts/train_ocsvm.py --config configs/ocsvm_config.yaml

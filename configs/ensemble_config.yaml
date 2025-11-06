@@ -1,0 +1,51 @@
+# Ensemble Model Configuration
+# Combines multiple trained models for improved performance
+
+ensemble:
+  # Ensemble method: 'voting', 'stacking', or 'weighted_average'
+  method: 'voting'
+  
+  # Compare ensemble performance with individual base models
+  compare_with_base: true
+  
+  # Base models to include in ensemble
+  # Each model should have a path to a trained model file and a weight
+  base_models:
+    random_forest:
+      path: 'results/rf20__complete_trees500_20251106_152459/models/random_forest_detector.pkl'
+      weight: 1.0
+    
+    lightgbm:
+      path: 'results/lightgbm_complete_with_pkl_20251106_160526/models/lightgbm_model.pkl'
+      weight: 1.2  # Higher weight due to typically better performance
+    
+    # bilstm:
+    #   path: 'models/bilstm_model.pkl'
+    #   weight: 0.8  # Lower weight as deep learning may overfit on small data
+  
+  # Voting configuration (used when method='voting')
+  voting:
+    voting_type: 'soft'  # 'soft' (probabilities) or 'hard' (class labels)
+  
+  # Stacking configuration (used when method='stacking')
+  stacking:
+    meta_learner: 'logistic_regression'  # Meta-learner type
+    cv_folds: 5  # Number of cross-validation folds for stacking
+    passthrough: false  # Whether to pass original features to meta-learner
+    
+    # Meta-learner hyperparameters
+    meta_params:
+      max_iter: 1000
+      random_state: 42
+      solver: 'lbfgs'
+      C: 1.0
+  
+  # Weighted average configuration (used when method='weighted_average')
+  weighted_average:
+    normalize_weights: true  # Normalize weights to sum to 1
+    threshold: 0.5  # Classification threshold for binary prediction
+
+# Training configuration (inherits from base_config.yaml)
+training:
+  # stratify_split: true
+  random_state: 42

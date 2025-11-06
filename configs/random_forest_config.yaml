@@ -1,0 +1,54 @@
+# Random Forest Configuration
+
+model_type: "random_forest"
+model_name: "random_forest_detector"
+
+# Feature Selection
+feature_selection:
+  enable: true
+  method: "hybrid"  # hybrid (SelectKBest + SHAP) or selectkbest or none
+  selectkbest:
+    k: 50  # Number of features to select
+    score_func: "mutual_info"  # mutual_info, chi2, or f_classif
+  shap:
+    top_n: 20  # Final number of features after SHAP analysis
+    sample_size: 1000  # Sample size for SHAP calculation
+
+# Random Forest Parameters
+random_forest:
+  n_estimators: 500
+  max_depth: null  # No limit
+  min_samples_split: 2
+  min_samples_leaf: 1
+  max_features: "sqrt"  # sqrt, log2, or int
+  bootstrap: true
+  oob_score: true
+  n_jobs: -1
+  random_state: 42
+  class_weight: "balanced"
+  
+  # Additional parameters
+  criterion: "gini"  # gini or entropy
+  max_leaf_nodes: null
+  min_impurity_decrease: 0.0
+
+# Training
+training:
+  stratify_split: true
+  cross_validation: false
+  cv_folds: 5
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+  
+  plot_types:
+    - "confusion_matrix"
+    - "feature_importance"
+    - "roc_curve"
+    - "oob_error_rate"

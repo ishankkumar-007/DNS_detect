@@ -104,7 +104,7 @@ output:
   plots_dir: "results/plots"
   metrics_dir: "results/metrics"
   logs_dir: "logs"
-  cache_dir: "cache"  # Cache for preprocessed data
+  cache_dir: "cache torch"  # Cache for preprocessed data
   
   # Model saving
   model_name: "dns_spoofing_detector"

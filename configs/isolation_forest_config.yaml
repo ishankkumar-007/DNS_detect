@@ -1,0 +1,34 @@
+# Isolation Forest Unsupervised Configuration
+
+model_type: "isolation_forest"
+model_name: "isolation_forest_detector"
+
+# Isolation Forest Parameters
+isolation_forest:
+  n_estimators: 100
+  max_samples: "auto"  # auto or int
+  contamination: 0.05  # Expected proportion of outliers
+  max_features: 1.0
+  bootstrap: false
+  n_jobs: -1
+  random_state: 42
+  verbose: 0
+  warm_start: false
+
+# Training
+training:
+  train_on_benign_only: true  # Train on benign data only
+  
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+  
+  plot_types:
+    - "confusion_matrix"
+    - "roc_curve"
+    - "anomaly_score_distribution"
