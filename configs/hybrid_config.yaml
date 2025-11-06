@@ -1,0 +1,141 @@
+# Hybrid Model Configuration - Supervised + Unsupervised Ensemble
+# Combines Random Forest (supervised) and Isolation Forest (unsupervised)
+
+model_type: "hybrid"
+model_name: "hybrid_detector"
+
+# Base Model Paths - Pre-trained models to load
+hybrid:
+  # Supervised component - Random Forest
+  supervised_model:
+    name: "random_forest"
+    path: "results/rf20__complete_trees500_20251106_152459/models/random_forest_detector.pkl"
+    weight: 0.5  # Weight in ensemble (higher weight = more influence)
+    
+  # Unsupervised component - Isolation Forest
+  unsupervised_model:
+    name: "isolation_forest"
+    path: "results/iforest_20_complete_n100_cont5_20251106_212246/models/iforest_detector.pkl"
+    weight: 0.5  # Weight in ensemble
+  
+  # Fusion Strategy - How to combine predictions
+  fusion_strategy: "anomaly_aware"  # Options: voting, anomaly_aware, two_stage, weighted_average
+  
+  # Voting Strategy (when fusion_strategy = "voting")
+  voting:
+    method: "soft"  # soft (probability-based) or hard (majority vote)
+    weights: [0.5, 0.5]  # Weights for RF and IF respectively
+    
+  # Anomaly-Aware Strategy (when fusion_strategy = "anomaly_aware")
+  # Uses IF anomaly scores to adjust RF confidence
+  anomaly_aware:
+    # IF anomaly probability threshold - above this, sample is suspicious
+    anomaly_threshold: 0.6
+    # Boost factor - how much to increase malicious probability when anomalous
+    anomaly_boost_factor: 1.5
+    # Min confidence - minimum RF confidence to override with anomaly score
+    min_rf_confidence: 0.5
+    # Use adaptive thresholding based on anomaly score distribution
+    adaptive_threshold: true
+    
+  # Two-Stage Detection (when fusion_strategy = "two_stage")
+  # Stage 1: IF detects anomalies, Stage 2: RF classifies detected anomalies
+  two_stage:
+    # Anomaly detection threshold for Stage 1 (IF)
+    if_threshold: 0.5
+    # Only classify samples flagged as anomalous by IF
+    classify_anomalies_only: false
+    # Decision logic: "if_then_rf" or "rf_with_if_filter"
+    logic: "if_then_rf"
+    
+  # Weighted Average Strategy (when fusion_strategy = "weighted_average")
+  weighted_average:
+    normalize_weights: true
+    decision_threshold: 0.5  # Threshold for binary classification
+    
+  # Decision Logic Configuration
+  decision:
+    # Final decision threshold for hybrid probability
+    threshold: 0.5
+    # Use IF score to flag high-confidence malicious even if RF disagrees
+    use_anomaly_override: true
+    # Anomaly override threshold (IF prob above this overrides RF)
+    anomaly_override_threshold: 0.8
+    # Minimum samples to use adaptive thresholding
+    min_samples_adaptive: 1000
+
+# Feature Selection - Should match what was used for RF and IF training
+feature_selection:
+  enable: true
+  method: "hybrid"  # hybrid (SelectKBest + SHAP) - must match base models
+  selectkbest:
+    k: 50  # Must match base models
+    score_func: "mutual_info"
+  shap:
+    top_n: 20  # Must match base models - both RF and IF use 20 features
+    sample_size: 1000
+
+# Evaluation Configuration
+evaluation:
+  # Compare hybrid model against individual RF and IF models
+  compare_with_base_models: true
+  
+  # Generate detailed analysis plots
+  plot_types:
+    - "confusion_matrix"
+    - "roc_curve"
+    - "pr_curve"
+    - "decision_boundaries"
+    - "score_distributions"
+    - "model_agreement"
+    - "feature_importance_comparison"
+  
+  # Metrics to compute
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+    - "pr_auc"
+    - "false_positive_rate"
+    - "false_negative_rate"
+    
+  # Analyze model agreement and disagreement
+  analyze_disagreements: true
+  
+  # Explain top misclassifications
+  explain_errors: true
+  top_errors_to_explain: 50
+
+# Output Configuration
+output:
+  save_hybrid_predictions: true  # Save predictions from both models + hybrid
+  save_confidence_scores: true   # Save all confidence/anomaly scores
+  save_plots: true
+  show_plots: false
+  
+# Real-time Detection Configuration
+real_time:
+  # Maximum inference time (milliseconds)
+  max_inference_time_ms: 100
+  # Use model caching for faster repeated predictions
+  enable_caching: true
+  # Batch size for batch predictions
+  batch_size: 1000
+
+# Advantages and Use Cases
+# This hybrid approach combines:
+# 1. Random Forest: Excellent for known attack patterns with labeled data
+# 2. Isolation Forest: Detects novel/zero-day attacks without requiring labels
+# 
+# Benefits:
+# - Better detection of both known and unknown threats
+# - Reduced false positives through cross-validation
+# - Anomaly scores provide additional context for security analysts
+# - More robust to concept drift in DNS traffic patterns
+#
+# Use Cases:
+# - Production environments needing high accuracy + novel threat detection
+# - Security monitoring where both precision and recall are critical
+# - Systems requiring explainable predictions (why is traffic malicious?)
