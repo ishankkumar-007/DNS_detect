@@ -9,8 +9,10 @@ from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif, f_
 from sklearn.preprocessing import MinMaxScaler
 import shap
 import lightgbm as lgb
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
+from pathlib import Path
 import logging
+import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -26,7 +28,8 @@ class HybridFeatureSelector:
     2. SHAP: Model-based explainability for fine-tuning
     """
     
-    def __init__(self, k_best: int = 50, shap_top_n: int = 30, random_state: int = 42):
+    def __init__(self, k_best: int = 50, shap_top_n: int = 30, random_state: int = 42,
+                 cache_dir: str = 'cache', use_cache: bool = True, sample_fraction: Optional[float] = None):
         """
         Initialize hybrid feature selector
         
@@ -34,16 +37,27 @@ class HybridFeatureSelector:
             k_best: Number of features to select in SelectKBest stage
             shap_top_n: Number of top features to select from SHAP stage
             random_state: Random seed for reproducibility
+            cache_dir: Directory to store cached feature selections
+            use_cache: Whether to use caching
+            sample_fraction: Sample fraction used for data (for cache key)
         """
         self.k_best = k_best
         self.shap_top_n = shap_top_n
         self.random_state = random_state
+        self.sample_fraction = sample_fraction
         
         self.selectkbest_selector = None
         self.selected_features_kbest = None
         self.shap_values = None
         self.final_features = None
         self.feature_importance_df = None
+        
+        # Cache configuration
+        self.cache_dir = Path(cache_dir)
+        self.use_cache = use_cache
+        if self.use_cache:
+            self.cache_dir.mkdir(exist_ok=True)
+            logger.info(f"Feature selection caching enabled: {self.cache_dir}")
         
     def stage1_selectkbest(self, X: pd.DataFrame, y: pd.Series, 
                            method: str = 'mutual_info') -> pd.DataFrame:
@@ -226,11 +240,79 @@ class HybridFeatureSelector:
         
         return self.final_features
     
+    def _get_cache_key(self, method: str, n_features: int) -> str:
+        """
+        Generate cache key for feature selection results.
+        
+        Args:
+            method: Selection method used
+            n_features: Number of input features
+            
+        Returns:
+            Cache filename
+        """
+        # Include sample fraction in cache key
+        sample_str = f"{self.sample_fraction}" if self.sample_fraction is not None else "full"
+        cache_key = f"feature_selection_{method}_k{self.k_best}_shap{self.shap_top_n}_nf{n_features}_sample{sample_str}.pkl"
+        return cache_key
+    
+    def _load_from_cache(self, cache_key: str) -> Optional[Dict]:
+        """
+        Load feature selection from cache if it exists.
+        
+        Args:
+            cache_key: Cache filename
+            
+        Returns:
+            Cached feature selection dict or None if not found
+        """
+        if not self.use_cache:
+            return None
+        
+        cache_path = self.cache_dir / cache_key
+        if cache_path.exists():
+            logger.info(f"Loading feature selection from cache: {cache_path}")
+            try:
+                with open(cache_path, 'rb') as f:
+                    cached_data = pickle.load(f)
+                logger.info(f"✓ Loaded {len(cached_data['final_features'])} selected features from cache")
+                return cached_data
+            except Exception as e:
+                logger.warning(f"Failed to load feature selection cache: {e}")
+                return None
+        return None
+    
+    def _save_to_cache(self, cache_key: str):
+        """
+        Save feature selection results to cache.
+        
+        Args:
+            cache_key: Cache filename
+        """
+        if not self.use_cache:
+            return
+        
+        cache_path = self.cache_dir / cache_key
+        logger.info(f"Saving feature selection to cache: {cache_path}")
+        try:
+            cached_data = {
+                'selected_features_kbest': self.selected_features_kbest,
+                'final_features': self.final_features,
+                'feature_importance_df': self.feature_importance_df,
+                'k_best': self.k_best,
+                'shap_top_n': self.shap_top_n
+            }
+            with open(cache_path, 'wb') as f:
+                pickle.dump(cached_data, f, protocol=pickle.HIGHEST_PROTOCOL)
+            logger.info(f"✓ Cached feature selection with {len(self.final_features)} features")
+        except Exception as e:
+            logger.warning(f"Failed to save feature selection cache: {e}")
+    
     def fit_transform(self, X_train: pd.DataFrame, y_train: pd.Series,
                       X_val: pd.DataFrame = None, y_val: pd.Series = None,
-                      method: str = 'mutual_info') -> Tuple[pd.DataFrame, pd.DataFrame]:
+                      method: str = 'mutual_info') -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
         """
-        Complete hybrid feature selection pipeline
+        Complete hybrid feature selection pipeline with caching support.
         
         Args:
             X_train: Training features
@@ -245,6 +327,26 @@ class HybridFeatureSelector:
         logger.info("Starting hybrid feature selection pipeline...")
         logger.info(f"Initial features: {X_train.shape[1]}")
         
+        # Try to load from cache
+        cache_key = self._get_cache_key(method, X_train.shape[1])
+        cached_data = self._load_from_cache(cache_key)
+        
+        if cached_data is not None:
+            # Restore from cache
+            self.selected_features_kbest = cached_data['selected_features_kbest']
+            self.final_features = cached_data['final_features']
+            self.feature_importance_df = cached_data['feature_importance_df']
+            
+            # Return selected features
+            X_train_final = X_train[self.final_features]
+            X_val_final = X_val[self.final_features] if X_val is not None else None
+            
+            logger.info(f"Using cached feature selection: {len(self.final_features)} features")
+            return X_train_final, X_val_final
+        
+        # Cache miss - perform feature selection
+        logger.info("Cache miss - performing feature selection...")
+        
         # Stage 1: SelectKBest
         X_train_kbest = self.stage1_selectkbest(X_train, y_train, method=method)
         
@@ -255,6 +357,9 @@ class HybridFeatureSelector:
         
         # Stage 2: SHAP
         self.stage2_shap(X_train_kbest, y_train, X_val_kbest, y_val)
+        
+        # Save to cache
+        self._save_to_cache(cache_key)
         
         # Return final selected features
         X_train_final = X_train_kbest[self.final_features]
