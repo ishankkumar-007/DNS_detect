@@ -72,6 +72,7 @@ Thumbs.db
 *.bak
 *.swp
 .cache/
+DUMP/
 
 # Distribution / packaging
 .Python
