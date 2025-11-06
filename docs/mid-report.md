@@ -631,7 +631,7 @@ def _convert_to_native_types(self, obj):
 
 ---
 
-## 7. Code Quality & Best Practices
+## 7. Code Quality
 
 ### 7.1 Project Structure
 
