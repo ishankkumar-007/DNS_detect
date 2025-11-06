@@ -1,6 +1,6 @@
 {
-    "experiment_name": "test_nu5_pca_20251017_105102",
-    "timestamp": "20251017_105102",
+    "experiment_name": "ocsvm_sample_test_nu5_pca_20251105_194632",
+    "timestamp": "20251105_194632",
     "model_type": "OneClassSVM",
     "kernel": "rbf",
     "nu": 0.05,
@@ -13,7 +13,7 @@
     "training_stats": {
         "n_samples": 290342,
         "n_features": 111,
-        "timestamp": "2025-10-17T10:55:40.933829",
+        "timestamp": "2025-11-05T19:51:05.122622",
         "pca_explained_variance": 0.9771184035403373,
         "decision_mean": 227.65896705795137,
         "decision_std": 161.03899821564755,

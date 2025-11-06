@@ -1,0 +1,79 @@
+{
+    "experiment_name": "lightgbm_complete_with_pkl_20251106_160526",
+    "timestamp": "20251106_160526",
+    "model_type": "LightGBM",
+    "params": {
+        "random_state": 42,
+        "objective": "binary",
+        "boosting_type": "gbdt",
+        "metric": "binary_logloss",
+        "num_leaves": 31,
+        "max_depth": -1,
+        "min_child_samples": 20,
+        "min_child_weight": 0.001,
+        "learning_rate": 0.05,
+        "n_estimators": 500,
+        "early_stopping_rounds": 50,
+        "reg_alpha": 0.1,
+        "reg_lambda": 0.1,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 5,
+        "feature_fraction": 0.9,
+        "n_jobs": -1,
+        "verbose": -1
+    },
+    "sample_fraction": null,
+    "training_samples": 2990708,
+    "validation_samples": 332301,
+    "test_samples": 830753,
+    "feature_count": 111,
+    "test_metrics": {
+        "accuracy": 0.9687524450709176,
+        "precision_macro": 0.9172662805277169,
+        "recall_macro": 0.9476419121983564,
+        "f1_macro": 0.9316786228045794,
+        "precision_weighted": 0.9702989659336608,
+        "recall_weighted": 0.9687524450709176,
+        "f1_weighted": 0.9693010106131563,
+        "roc_auc": 0.9936166868149717,
+        "confusion_matrix": [
+            [
+                708380,
+                17507
+            ],
+            [
+                8452,
+                96414
+            ]
+        ],
+        "classification_report": {
+            "0": {
+                "precision": 0.9882092317307263,
+                "recall": 0.9758819210152544,
+                "f1-score": 0.9820068911548264,
+                "support": 725887.0
+            },
+            "1": {
+                "precision": 0.8463233293247074,
+                "recall": 0.9194019033814582,
+                "f1-score": 0.8813503544543323,
+                "support": 104866.0
+            },
+            "accuracy": 0.9687524450709176,
+            "macro avg": {
+                "precision": 0.9172662805277169,
+                "recall": 0.9476419121983564,
+                "f1-score": 0.9316786228045794,
+                "support": 830753.0
+            },
+            "weighted avg": {
+                "precision": 0.9702989659336608,
+                "recall": 0.9687524450709176,
+                "f1-score": 0.9693010106131563,
+                "support": 830753.0
+            }
+        }
+    }
+}

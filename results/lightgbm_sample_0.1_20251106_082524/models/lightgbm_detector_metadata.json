@@ -1,0 +1,71 @@
+{
+    "feature_names": [
+        "Unnamed_ 0",
+        "character_entropy",
+        "dns_domain_name_length",
+        "mode_packets_len",
+        "max_receiving_packets_len",
+        "max_continuous_same_alphabet_len",
+        "ttl_values_max",
+        "tld_frequency",
+        "numerical_percentage",
+        "mean_receiving_packets_len",
+        "uni_gram_domain_name_count",
+        "standard_deviation_packets_len",
+        "distinct_ttl_values",
+        "packets_rate",
+        "conv_freq_vowels_consonants",
+        "receiving_bytes",
+        "mean_packets_len",
+        "packets_len_rate",
+        "duration",
+        "ttl_values_mode",
+        "max_continuous_alphabet_len",
+        "distinct_A_records",
+        "mode_receiving_packets_len",
+        "coefficient_of_variation_packets_len",
+        "max_continuous_numeric_len",
+        "ttl_values_min",
+        "sending_bytes",
+        "median_packets_len",
+        "ttl_values_mean",
+        "bi_gram_domain_name_count"
+    ],
+    "label_names": {
+        "0": "Class_0",
+        "1": "Class_1"
+    },
+    "params": {
+        "random_state": 42,
+        "objective": "binary",
+        "boosting_type": "gbdt",
+        "metric": "binary_logloss",
+        "num_leaves": 31,
+        "max_depth": -1,
+        "min_child_samples": 20,
+        "min_child_weight": 0.001,
+        "learning_rate": 0.05,
+        "n_estimators": 500,
+        "early_stopping_rounds": 50,
+        "reg_alpha": 0.1,
+        "reg_lambda": 0.1,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 5,
+        "feature_fraction": 0.9,
+        "n_jobs": -1,
+        "verbose": -1
+    },
+    "best_iteration": 496,
+    "best_score": {
+        "train": {
+            "binary_logloss": 0.05927734223874117
+        },
+        "valid": {
+            "binary_logloss": 0.06858306683586565
+        }
+    },
+    "feature_selection_method": "hybrid",
+    "n_features": 30
+}
