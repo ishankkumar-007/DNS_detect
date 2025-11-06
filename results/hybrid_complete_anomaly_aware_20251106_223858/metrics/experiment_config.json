@@ -1,0 +1,114 @@
+{
+    "experiment_name": "hybrid_complete_anomaly_aware_20251106_223858",
+    "timestamp": "20251106_223858",
+    "model_type": "Hybrid",
+    "fusion_strategy": "anomaly_aware",
+    "supervised_model_path": "results/rf20__complete_trees500_20251106_152459/models/random_forest_detector.pkl",
+    "unsupervised_model_path": "results/iforest_20_complete_n100_cont5_20251106_212246/models/iforest_detector.pkl",
+    "sample_fraction": null,
+    "test_samples": 830753,
+    "feature_count": 20,
+    "metrics": {
+        "accuracy": 0.9717605593961142,
+        "precision_benign": 0.9893249887495803,
+        "recall_benign": 0.9782362819557314,
+        "f1_benign": 0.9837493886971664,
+        "precision_malicious": 0.8601971646519531,
+        "recall_malicious": 0.9269353269887285,
+        "f1_malicious": 0.8923201204398994,
+        "precision_weighted": 0.9730251759269702,
+        "recall_weighted": 0.9717605593961142,
+        "f1_weighted": 0.9722082667932233,
+        "roc_auc": 0.9933088804054088,
+        "pr_auc": 0.9530063520566532,
+        "confusion_matrix": [
+            [
+                710089,
+                15798
+            ],
+            [
+                7662,
+                97204
+            ]
+        ],
+        "fpr": 0.021763718044268597,
+        "fnr": 0.07306467301127152,
+        "base_models": {
+            "random_forest": {
+                "accuracy": 0.9709721180663807,
+                "precision_benign": 0.9863379192389041,
+                "recall_benign": 0.9803578242894555,
+                "f1_benign": 0.9833387799827688,
+                "precision_malicious": 0.8695122955695681,
+                "recall_malicious": 0.9060038525356169,
+                "f1_malicious": 0.8873830750047867,
+                "precision_weighted": 0.9715910138991599,
+                "recall_weighted": 0.9709721180663807,
+                "f1_weighted": 0.9712262857056237,
+                "roc_auc": 0.9932760291961837,
+                "pr_auc": 0.9529465289551857,
+                "confusion_matrix": [
+                    [
+                        711629,
+                        14258
+                    ],
+                    [
+                        9857,
+                        95009
+                    ]
+                ],
+                "fpr": 0.01964217571054448,
+                "fnr": 0.09399614746438312
+            },
+            "isolation_forest": {
+                "accuracy": 0.9236006370124453,
+                "precision_benign": 0.9620571026793562,
+                "recall_benign": 0.9500321675412289,
+                "f1_benign": 0.9560068233126615,
+                "precision_malicious": 0.6816629951114193,
+                "recall_malicious": 0.7406404363664104,
+                "f1_malicious": 0.7099289321542013,
+                "precision_weighted": 0.926662938006801,
+                "recall_weighted": 0.9236006370124453,
+                "f1_weighted": 0.9249443966536869,
+                "roc_auc": 0.8698444354532447,
+                "pr_auc": 0.6315625679862863,
+                "confusion_matrix": [
+                    [
+                        689616,
+                        36271
+                    ],
+                    [
+                        27198,
+                        77668
+                    ]
+                ],
+                "fpr": 0.04996783245877113,
+                "fnr": 0.25935956363358953
+            }
+        },
+        "agreement_analysis": {
+            "all_models_agree": {
+                "count": 781785,
+                "percentage": 0.9410558854436878,
+                "accuracy_when_agree": 0.9753013936056588
+            },
+            "hybrid_rf_agree": {
+                "count": 827018,
+                "percentage": 0.9955040788296883
+            },
+            "hybrid_if_agree": {
+                "count": 785486,
+                "percentage": 0.9455108798884867
+            },
+            "rf_if_agree": {
+                "count": 781819,
+                "percentage": 0.9410968121692007
+            },
+            "all_models_disagree": {
+                "count": 0,
+                "percentage": 0.0
+            }
+        }
+    }
+}
