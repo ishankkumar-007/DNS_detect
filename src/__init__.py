@@ -7,12 +7,18 @@ __author__ = "DNS Security Research Team"
 
 from .preprocessing import DNSDataPreprocessor
 from .feature_selection import HybridFeatureSelector
-from .model import DNSSpoofingDetector
+from .models.lightgbm_model import DNSSpoofingDetector
+from .models.deep_bilstm import BiLSTMDetector
+from .models.unsupervised_ocsvm import OneClassSVMAnomalyDetector
+from .models.unsupervised_iforest import IsolationForestAnomalyDetector
 from .real_time_detection import RealTimeDNSDetector
 
 __all__ = [
     'DNSDataPreprocessor',
     'HybridFeatureSelector',
     'DNSSpoofingDetector',
+    'BiLSTMDetector',
+    'OneClassSVMAnomalyDetector',
+    'IsolationForestAnomalyDetector',
     'RealTimeDNSDetector'
 ]
