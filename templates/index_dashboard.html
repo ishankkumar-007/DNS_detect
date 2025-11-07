@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Threat Detection Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-card);
+            padding: 24px;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--primary);
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--bg-hover);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 24px;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .dashboard-header h1 {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-header p {
+            opacity: 0.9;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (max-width: 1400px) {
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card.primary::before { background: var(--primary); }
+        .stat-card.success::before { background: var(--success); }
+        .stat-card.danger::before { background: var(--danger); }
+        .stat-card.warning::before { background: var(--warning); }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            margin-bottom: 12px;
+        }
+
+        .stat-card.primary .stat-icon { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+        .stat-card.success .stat-icon { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .stat-card.danger .stat-icon { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .stat-card.warning .stat-icon { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        .stat-change {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stat-change.up {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .stat-change.down {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Model Selection */
+        .model-item {
+            position: relative;
+            padding: 18px 20px;
+            background: var(--bg-hover);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .model-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            transition: all 0.3s;
+        }
+
+        .model-item:hover {
+            border-color: var(--primary);
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .model-item:hover::before {
+            background: var(--primary);
+        }
+
+        .model-item.selected {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.15);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .model-item.selected::before {
+            background: var(--primary);
+        }
+
+        .model-item.loaded {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.15);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .model-item.loaded::before {
+            background: var(--success);
+        }
+
+        .model-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .model-item.loaded .model-icon {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .model-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 0.95em;
+            margin-bottom: 4px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .model-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--bg-hover);
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload.active {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        /* Form */
+        .form-group {
+            margin: 16px 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .form-group input {
+            padding: 12px 16px;
+            background: var(--bg-hover);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            color: var(--text);
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .chart-container.tall {
+            height: 400px;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-hover);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        tr:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Badge */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-benign {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .badge-malicious {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Alert */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger);
+            color: var(--danger);
+        }
+
+        /* Spinner */
+        .spinner-container {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner-container.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+            border-radius: 4px;
+            transition: width 0.3s;
+            animation: progress 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0%, 100% { width: 0%; }
+            50% { width: 100%; }
+        }
+
+        /* Utilities */
+        .hidden { display: none; }
+        .mt-20 { margin-top: 20px; }
+        .text-center { text-align: center; }
+        .text-muted { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i>
+            DNS Threat Shield
+        </div>
+        <div class="nav-item active" data-section="dashboard">
+            <i class="fas fa-chart-line"></i>
+            Dashboard
+        </div>
+        <div class="nav-item" data-section="models">
+            <i class="fas fa-brain"></i>
+            Models
+        </div>
+        <div class="nav-item" data-section="detection">
+            <i class="fas fa-search"></i>
+            Detection
+        </div>
+        <div class="nav-item" data-section="analytics">
+            <i class="fas fa-chart-pie"></i>
+            Analytics
+        </div>
+        <div class="nav-item" data-section="history">
+            <i class="fas fa-history"></i>
+            History
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1><i class="fas fa-shield-alt"></i> DNS Threat Detection Dashboard</h1>
+            <p>Real-time monitoring and detection of DNS spoofing attacks using advanced machine learning</p>
+        </div>
+
+        <div id="alerts"></div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-4">
+            <div class="stat-card primary">
+                <div class="stat-icon"><i class="fas fa-network-wired"></i></div>
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Flows Analyzed</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-value" id="stat-malicious">0</div>
+                <div class="stat-label">Threats Detected</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-value" id="stat-benign">0</div>
+                <div class="stat-label">Benign Traffic</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div class="stat-value" id="stat-latency">0ms</div>
+                <div class="stat-label">Avg Detection Time</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-2">
+            <!-- Model Selection -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-brain"></i>
+                        LightGBM Models
+                    </div>
+                </div>
+                <div id="model-grid"></div>
+                <div class="mt-20">
+                    <button class="btn btn-primary" id="load-model-btn" disabled>
+                        <i class="fas fa-download"></i>
+                        Load Selected Model
+                    </button>
+                </div>
+                <div id="model-info" class="mt-20 hidden">
+                    <div style="padding: 20px; background: var(--bg-hover); border-radius: 12px; border-left: 4px solid var(--success);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.3em;"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--success); margin-bottom: 2px;">
+                                    <i class="fas fa-circle" style="font-size: 0.5em; margin-right: 6px;"></i>
+                                    Model Ready
+                                </div>
+                                <div style="font-size: 0.85em; color: var(--text-muted);">Detection system initialized</div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 0.9em;">
+                            <div style="color: var(--text-muted);"><i class="fas fa-info-circle"></i> Status:</div>
+                            <div id="model-status" style="font-weight: 600;"></div>
+                            <div style="color: var(--text-muted);"><i class="fas fa-layer-group"></i> Features:</div>
+                            <div id="model-features" style="font-weight: 600;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-file-upload"></i>
+                        Upload DNS Traffic Data
+                    </div>
+                </div>
+                
+                <div class="file-upload" id="file-upload">
+                    <input type="file" id="csv-file" accept=".csv" />
+                    <div style="font-size: 3em; margin-bottom: 16px;">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div style="font-weight: 600; margin-bottom: 8px;">Drop CSV file here or click to browse</div>
+                    <div class="text-muted">Maximum file size: 100MB</div>
+                    <div id="file-name" class="mt-20" style="font-weight: 600; color: var(--success);"></div>
+                </div>
+
+                <div class="form-group mt-20">
+                    <label for="max-rows">
+                        <i class="fas fa-filter"></i> Limit rows (optional):
+                    </label>
+                    <input type="number" id="max-rows" placeholder="Process all rows by default" min="1" />
+                </div>
+
+                <div class="mt-20">
+                    <button class="btn btn-success" id="predict-btn" disabled style="width: 100%;">
+                        <i class="fas fa-play"></i>
+                        Start Detection Analysis
+                    </button>
+                </div>
+
+                <div class="spinner-container" id="spinner-container">
+                    <div class="spinner"></div>
+                    <div>Analyzing DNS traffic patterns...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+            <!-- Visualization Cards -->
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Threat Distribution
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Detection Confidence
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="confidenceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-clock"></i>
+                            Latency Distribution
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            Threat Timeline
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-table"></i>
+                        Detailed Detection Results
+                    </div>
+                    <button class="btn btn-primary" id="download-btn">
+                        <i class="fas fa-download"></i>
+                        Export Full Report
+                    </button>
+                </div>
+                <div class="table-container" id="results-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedModel = null;
+        let loadedModel = null;
+        let downloadUrl = null;
+        let charts = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModels();
+            setupFileUpload();
+            setupEventListeners();
+        });
+
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/models');
+                const data = await response.json();
+                const models = data.lightgbm || [];
+                
+                const container = document.getElementById('model-grid');
+                
+                if (models.length === 0) {
+                    container.innerHTML = '<p class="text-muted"><i class="fas fa-info-circle"></i> No LightGBM models found in results directory</p>';
+                    return;
+                }
+                
+                models.forEach((model, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'model-item';
+                    div.innerHTML = `
+                        <div class="model-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-name" title="${model.name}">${model.name}</div>
+                            <div class="model-meta">
+                                <span class="model-badge">
+                                    <i class="fas fa-cube"></i> LightGBM
+                                </span>
+                                <span style="font-size: 0.75em; color: var(--text-muted);">
+                                    <i class="fas fa-layer-group"></i> Model #${index + 1}
+                                </span>
+                            </div>
+                        </div>
+                        <div style="margin-left: auto; font-size: 1.2em; color: var(--text-muted);">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    `;
+                    div.dataset.modelPath = model.path;
+                    div.dataset.modelName = model.name;
+                    
+                    div.addEventListener('click', () => selectModel(div, model));
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                showAlert('Error loading models: ' + error.message, 'error');
+            }
+        }
+
+        function selectModel(element, model) {
+            // Remove 'selected' class from all items, but preserve 'loaded' class
+            document.querySelectorAll('.model-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Add 'selected' to the clicked item
+            element.classList.add('selected');
+            
+            selectedModel = {
+                path: element.dataset.modelPath,
+                name: element.dataset.modelName
+            };
+            
+            // Enable load button only if this model is not already loaded
+            const isAlreadyLoaded = element.classList.contains('loaded');
+            const btn = document.getElementById('load-model-btn');
+            btn.disabled = false;
+            
+            if (isAlreadyLoaded) {
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Model Already Loaded';
+                btn.style.background = 'var(--success)';
+            } else {
+                btn.innerHTML = '<i class="fas fa-download"></i> Load Selected Model';
+                btn.style.background = '';
+            }
+        }
+
+        async function loadSelectedModel() {
+            if (!selectedModel) return;
+            
+            const btn = document.getElementById('load-model-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            
+            try {
+                const response = await fetch('/api/load_model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model_path: selectedModel.path,
+                        model_name: selectedModel.name
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Remove 'loaded' state from all previously loaded models
+                    document.querySelectorAll('.model-item.loaded').forEach(el => {
+                        el.classList.remove('loaded');
+                        // Reset icon back to brain
+                        const icon = el.querySelector('.model-icon i');
+                        if (icon) {
+                            icon.className = 'fas fa-brain';
+                        }
+                    });
+                    
+                    loadedModel = selectedModel;
+                    showAlert('Model loaded successfully!', 'success');
+                    
+                    const selectedItem = document.querySelector('.model-item.selected');
+                    selectedItem.classList.add('loaded');
+                    
+                    // Update icon to show loaded state
+                    const icon = selectedItem.querySelector('.model-icon i');
+                    icon.className = 'fas fa-check-circle';
+                    
+                    document.getElementById('predict-btn').disabled = false;
+                    
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Model Loaded Successfully';
+                    btn.style.background = 'var(--success)';
+                    
+                    // Show model info
+                    document.getElementById('model-info').classList.remove('hidden');
+                    document.getElementById('model-status').innerHTML = '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Ready for Detection</span>';
+                    
+                    // Get model details
+                    try {
+                        const infoResp = await fetch(`/api/model_info/${selectedModel.name}`);
+                        const info = await infoResp.json();
+                        document.getElementById('model-features').innerHTML = `<span style="color: var(--info);">${info.feature_count}</span> features selected`;
+                    } catch (e) {
+                        document.getElementById('model-features').textContent = 'Information not available';
+                    }
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-download"></i> Load Selected Model';
+                }
+            } catch (error) {
+                showAlert('Error loading model: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> Load Selected Model';
+            }
+        }
+
+        function setupFileUpload() {
+            const fileUpload = document.getElementById('file-upload');
+            const fileInput = document.getElementById('csv-file');
+            
+            fileUpload.addEventListener('click', () => fileInput.click());
+            
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.classList.add('active');
+            });
+            
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.classList.remove('active');
+            });
+            
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.classList.remove('active');
+                fileInput.files = e.dataTransfer.files;
+                updateFileName();
+            });
+            
+            fileInput.addEventListener('change', updateFileName);
+        }
+
+        function updateFileName() {
+            const fileName = document.getElementById('csv-file').files[0]?.name || '';
+            document.getElementById('file-name').innerHTML = fileName ? 
+                `<i class="fas fa-file-csv"></i> ${fileName}` : '';
+        }
+
+        async function runPrediction() {
+            const fileInput = document.getElementById('csv-file');
+            
+            if (!fileInput.files[0]) {
+                showAlert('Please select a CSV file', 'error');
+                return;
+            }
+            
+            if (!loadedModel) {
+                showAlert('Please load a model first', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('model_name', loadedModel.name);
+            
+            const maxRows = document.getElementById('max-rows').value;
+            if (maxRows) formData.append('max_rows', maxRows);
+            
+            document.getElementById('spinner-container').classList.add('show');
+            document.getElementById('predict-btn').disabled = true;
+            document.getElementById('results').classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    displayResults(result);
+                    downloadUrl = result.download_url;
+                    showAlert('Detection completed successfully!', 'success');
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error during prediction: ' + error.message, 'error');
+            } finally {
+                document.getElementById('spinner-container').classList.remove('show');
+                document.getElementById('predict-btn').disabled = false;
+            }
+        }
+
+        function displayResults(result) {
+            const stats = result.statistics;
+            
+            // Update stat cards
+            document.getElementById('stat-total').textContent = stats.total_flows.toLocaleString();
+            document.getElementById('stat-malicious').textContent = stats.malicious_detected.toLocaleString();
+            document.getElementById('stat-benign').textContent = (stats.total_flows - stats.malicious_detected).toLocaleString();
+            document.getElementById('stat-latency').textContent = stats.avg_latency_ms.toFixed(2) + 'ms';
+            
+            // Create charts
+            createDistributionChart(result.prediction_distribution);
+            createConfidenceChart(result.sample_predictions);
+            createLatencyChart(result.all_predictions || result.sample_predictions);  // Use all predictions
+            createTimelineChart(result.all_predictions || result.sample_predictions);  // Use all predictions
+            
+            // Create table
+            createResultsTable(result.sample_predictions);
+            
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function createDistributionChart(distribution) {
+            const ctx = document.getElementById('distributionChart');
+            
+            if (charts.distribution) charts.distribution.destroy();
+            
+            const labels = Object.keys(distribution);
+            const data = Object.values(distribution);
+            
+            // Color mapping: Class_0/0 = Benign (green), Class_1/1 = Malicious (red)
+            // Also handles labels with 'benign' or 'malicious' in the name
+            const colors = labels.map(label => {
+                const labelLower = label.toLowerCase();
+                // Check if it's benign (Class_0, 0, or contains 'benign')
+                if (labelLower.includes('class_0') || labelLower === '0' || labelLower.includes('benign')) {
+                    return '#10b981'; // Green
+                }
+                // Otherwise it's malicious (Class_1, 1, or contains 'malicious', 'attack', etc.)
+                return '#ef4444'; // Red
+            });
+            
+            charts.distribution = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#f1f5f9', padding: 15 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9',
+                            borderColor: '#334155',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        function createConfidenceChart(predictions) {
+            const ctx = document.getElementById('confidenceChart');
+            
+            if (charts.confidence) charts.confidence.destroy();
+            
+            const labels = predictions.map((_, i) => `Flow ${i + 1}`);
+            const data = predictions.map(p => (p.confidence * 100).toFixed(2));
+            const colors = predictions.map(p => 
+                p.is_malicious ? 'rgba(239, 68, 68, 0.6)' : 'rgba(16, 185, 129, 0.6)'
+            );
+            
+            charts.confidence = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Confidence %',
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: colors.map(c => c.replace('0.6', '1'))
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createLatencyChart(predictions) {
+            const ctx = document.getElementById('latencyChart');
+            
+            if (charts.latency) charts.latency.destroy();
+            
+            // For large datasets, show every nth label to avoid clutter
+            const totalFlows = predictions.length;
+            const maxLabels = 50;  // Maximum number of labels to show
+            const labelStep = Math.ceil(totalFlows / maxLabels);
+            
+            const labels = predictions.map((_, i) => {
+                // Show label only at intervals or for first/last
+                if (i === 0 || i === totalFlows - 1 || i % labelStep === 0) {
+                    return `Flow ${i + 1}`;
+                }
+                return '';  // Empty label for intermediate points
+            });
+            const data = predictions.map(p => p.latency_ms ? p.latency_ms.toFixed(2) : 0);
+            
+            // Reduce point size for large datasets
+            const pointRadius = totalFlows > 100 ? 2 : (totalFlows > 50 ? 3 : 4);
+            
+            charts.latency = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Latency (ms) - ${totalFlows.toLocaleString()} flows`,
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        pointRadius: pointRadius
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#f1f5f9' } },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9',
+                            callbacks: {
+                                title: function(context) {
+                                    return `Flow ${context[0].dataIndex + 1}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#94a3b8',
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTimelineChart(predictions) {
+            const ctx = document.getElementById('timelineChart');
+            
+            if (charts.timeline) charts.timeline.destroy();
+            
+            // For large datasets, show every nth label to avoid clutter
+            const totalFlows = predictions.length;
+            const maxLabels = 50;
+            const labelStep = Math.ceil(totalFlows / maxLabels);
+            
+            const labels = predictions.map((_, i) => {
+                if (i === 0 || i === totalFlows - 1 || i % labelStep === 0) {
+                    return `T${i + 1}`;
+                }
+                return '';
+            });
+            const malicious = predictions.map(p => p.is_malicious ? 1 : 0);
+            
+            // Reduce point size for large datasets
+            const pointRadius = totalFlows > 100 ? 3 : (totalFlows > 50 ? 4 : 6);
+            
+            charts.timeline = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Threat Detection Timeline - ${totalFlows.toLocaleString()} flows`,
+                        data: malicious,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        stepped: true,
+                        fill: true,
+                        pointBackgroundColor: malicious.map(v => v ? '#ef4444' : '#10b981'),
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: pointRadius
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#f1f5f9' } },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#f1f5f9',
+                            callbacks: {
+                                title: function(context) {
+                                    return `Flow ${context[0].dataIndex + 1}`;
+                                },
+                                label: function(context) {
+                                    return context.parsed.y === 1 ? '⚠️ THREAT DETECTED' : '✓ Safe Traffic';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            grid: { color: '#334155' },
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return value === 1 ? 'Threat' : 'Safe';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#94a3b8',
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createResultsTable(predictions) {
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Label</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                            <th>Latency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            predictions.forEach((pred, i) => {
+                const badgeClass = pred.is_malicious ? 'badge-malicious' : 'badge-benign';
+                const status = pred.is_malicious ? '⚠️ THREAT' : '✓ SAFE';
+                
+                tableHtml += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${pred.predicted_label}</strong></td>
+                        <td>${(pred.confidence * 100).toFixed(2)}%</td>
+                        <td><span class="badge ${badgeClass}">${status}</span></td>
+                        <td>${pred.latency_ms ? pred.latency_ms.toFixed(2) + 'ms' : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += '</tbody></table>';
+            document.getElementById('results-table').innerHTML = tableHtml;
+        }
+
+        function showAlert(message, type) {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            alert.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('load-model-btn').addEventListener('click', loadSelectedModel);
+            document.getElementById('predict-btn').addEventListener('click', runPrediction);
+            document.getElementById('download-btn').addEventListener('click', () => {
+                if (downloadUrl) window.location.href = downloadUrl;
+            });
+        }
+    </script>
+</body>
+</html>

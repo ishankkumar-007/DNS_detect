@@ -23,3 +23,19 @@ tqdm>=4.65.0
 
 # Performance Monitoring
 psutil>=5.9.0
+
+# Flask Web Framework
+Flask>=2.3.0
+Flask-CORS>=4.0.0
+Werkzeug>=2.3.0
+
+# PCAP Processing
+scapy>=2.5.0
+
+# Security
+Flask-WTF>=1.1.0
+Flask-Limiter>=3.3.0
+
+# # Deep Learning (optional, for BiLSTM models)
+# tensorflow>=2.13.0
+# keras>=2.13.0

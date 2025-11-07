@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Spoofing Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .model-category {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .model-category h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-size: 1em;
+            letter-spacing: 1px;
+        }
+
+        .model-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .model-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .model-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .model-item.loaded {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            padding: 12px 30px;
+            background: #6c757d;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .file-input-label:hover {
+            background: #5a6268;
+        }
+
+        .form-group {
+            margin: 20px 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input[type="number"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+            font-size: 1em;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .prediction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .prediction-table th,
+        .prediction-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .prediction-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .prediction-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-benign {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-malicious {
+            background: #dc3545;
+            color: white;
+        }
+
+        .selected-model-info {
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .selected-model-info.show {
+            display: block;
+        }
+
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ DNS Spoofing Detection System</h1>
+            <p>Real-time DNS Traffic Analysis with Machine Learning</p>
+        </div>
+
+        <div class="content">
+            <!-- Model Selection Section -->
+            <div class="section">
+                <h2>📊 Step 1: Select & Load Model</h2>
+                <div id="alerts"></div>
+                
+                <div class="model-grid">
+                    <div class="model-category">
+                        <h3>🔵 LightGBM Models</h3>
+                        <div id="lightgbm-models"></div>
+                    </div>
+                    
+                    <div class="model-category">
+                        <h3>🌲 Random Forest Models</h3>
+                        <div id="random_forest-models"></div>
+                    </div>
+                    
+                    <div class="model-category">
+                        <h3>🔀 Hybrid Models</h3>
+                        <div id="hybrid-models"></div>
+                    </div>
+                    
+                    <div class="model-category">
+                        <h3>🧠 BiLSTM Models</h3>
+                        <div id="bilstm-models"></div>
+                    </div>
+                    
+                    <div class="model-category">
+                        <h3>🌳 Isolation Forest Models</h3>
+                        <div id="isolation_forest-models"></div>
+                    </div>
+                    
+                    <div class="model-category">
+                        <h3>⭕ OCSVM Models</h3>
+                        <div id="ocsvm-models"></div>
+                    </div>
+                </div>
+
+                <div class="selected-model-info" id="selected-model-info">
+                    <strong>Selected Model:</strong> <span id="selected-model-name"></span>
+                </div>
+
+                <button class="btn btn-primary" id="load-model-btn" disabled>Load Selected Model</button>
+            </div>
+
+            <!-- Prediction Section -->
+            <div class="section">
+                <h2>🔍 Step 2: Upload Data & Predict</h2>
+                
+                <div class="form-group">
+                    <label>Upload CSV File:</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="csv-file" accept=".csv" />
+                        <label for="csv-file" class="file-input-label">Choose File</label>
+                    </div>
+                    <span id="file-name"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="max-rows">Maximum Rows (optional):</label>
+                    <input type="number" id="max-rows" placeholder="Leave empty for all rows" min="1" />
+                </div>
+
+                <button class="btn btn-success" id="predict-btn" disabled>Run Prediction</button>
+                
+                <div class="spinner" id="spinner"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results" id="results">
+                <h2>📈 Prediction Results</h2>
+                
+                <div class="stats-grid" id="stats-grid"></div>
+
+                <div class="chart-container">
+                    <h3>Prediction Distribution</h3>
+                    <div id="prediction-distribution"></div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Sample Predictions (First 10 flows)</h3>
+                    <div id="sample-predictions"></div>
+                </div>
+
+                <button class="btn btn-primary" id="download-btn">Download Full Results</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedModel = null;
+        let loadedModel = null;
+        let downloadUrl = null;
+
+        // Load available models
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/models');
+                const models = await response.json();
+                
+                for (const [modelType, modelList] of Object.entries(models)) {
+                    const container = document.getElementById(`${modelType}-models`);
+                    
+                    if (modelList.length === 0) {
+                        container.innerHTML = '<p style="color: #999; font-size: 0.9em;">No models found</p>';
+                        continue;
+                    }
+                    
+                    modelList.forEach(model => {
+                        const div = document.createElement('div');
+                        div.className = 'model-item';
+                        div.textContent = model.name;
+                        div.dataset.modelType = modelType;
+                        div.dataset.modelPath = model.path;
+                        div.dataset.modelName = model.name;
+                        
+                        div.addEventListener('click', () => selectModel(div, model));
+                        container.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                showAlert('Error loading models: ' + error.message, 'error');
+            }
+        }
+
+        function selectModel(element, model) {
+            // Remove previous selection
+            document.querySelectorAll('.model-item.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            selectedModel = {
+                type: element.dataset.modelType,
+                path: element.dataset.modelPath,
+                name: element.dataset.modelName
+            };
+            
+            document.getElementById('selected-model-info').classList.add('show');
+            document.getElementById('selected-model-name').textContent = model.name;
+            document.getElementById('load-model-btn').disabled = false;
+        }
+
+        async function loadSelectedModel() {
+            if (!selectedModel) return;
+            
+            const btn = document.getElementById('load-model-btn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/load_model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model_type: selectedModel.type,
+                        model_path: selectedModel.path,
+                        model_name: selectedModel.name
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    loadedModel = selectedModel;
+                    showAlert(result.message, 'success');
+                    
+                    // Mark as loaded
+                    document.querySelector('.model-item.selected').classList.add('loaded');
+                    document.getElementById('predict-btn').disabled = false;
+                    
+                    btn.textContent = 'Model Loaded ✓';
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Load Selected Model';
+                }
+            } catch (error) {
+                showAlert('Error loading model: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Load Selected Model';
+            }
+        }
+
+        async function runPrediction() {
+            const fileInput = document.getElementById('csv-file');
+            const maxRows = document.getElementById('max-rows').value;
+            
+            if (!fileInput.files[0]) {
+                showAlert('Please select a CSV file', 'error');
+                return;
+            }
+            
+            if (!loadedModel) {
+                showAlert('Please load a model first', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('model_name', loadedModel.name);
+            if (maxRows) formData.append('max_rows', maxRows);
+            
+            // Show spinner
+            document.getElementById('spinner').classList.add('show');
+            document.getElementById('predict-btn').disabled = true;
+            document.getElementById('results').classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    displayResults(result);
+                    downloadUrl = result.download_url;
+                } else {
+                    showAlert('Prediction error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error during prediction: ' + error.message, 'error');
+            } finally {
+                document.getElementById('spinner').classList.remove('show');
+                document.getElementById('predict-btn').disabled = false;
+            }
+        }
+
+        function displayResults(result) {
+            const stats = result.statistics;
+            
+            // Display statistics
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="label">Total Flows</div>
+                    <div class="value">${stats.total_flows}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Malicious Detected</div>
+                    <div class="value">${stats.malicious_detected}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Detection Rate</div>
+                    <div class="value">${stats.detection_rate.toFixed(2)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Latency</div>
+                    <div class="value">${stats.avg_latency_ms.toFixed(2)}ms</div>
+                </div>
+            `;
+            document.getElementById('stats-grid').innerHTML = statsHtml;
+            
+            // Display prediction distribution
+            let distHtml = '<ul style="list-style: none; padding: 0;">';
+            for (const [label, count] of Object.entries(result.prediction_distribution)) {
+                distHtml += `<li style="padding: 8px; margin: 5px 0; background: #f8f9fa; border-radius: 5px;">
+                    <strong>${label}:</strong> ${count} flows (${(count/stats.total_flows*100).toFixed(2)}%)
+                </li>`;
+            }
+            distHtml += '</ul>';
+            document.getElementById('prediction-distribution').innerHTML = distHtml;
+            
+            // Display sample predictions
+            let tableHtml = `
+                <table class="prediction-table">
+                    <thead>
+                        <tr>
+                            <th>Predicted Class</th>
+                            <th>Label</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            result.sample_predictions.forEach(pred => {
+                const badgeClass = pred.is_malicious ? 'badge-malicious' : 'badge-benign';
+                const status = pred.is_malicious ? 'MALICIOUS' : 'BENIGN';
+                
+                tableHtml += `
+                    <tr>
+                        <td>${pred.predicted_class}</td>
+                        <td>${pred.predicted_label}</td>
+                        <td>${(pred.confidence * 100).toFixed(2)}%</td>
+                        <td><span class="badge ${badgeClass}">${status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += '</tbody></table>';
+            document.getElementById('sample-predictions').innerHTML = tableHtml;
+            
+            document.getElementById('results').classList.add('show');
+            showAlert('Prediction completed successfully!', 'success');
+        }
+
+        function showAlert(message, type) {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        // Event listeners
+        document.getElementById('load-model-btn').addEventListener('click', loadSelectedModel);
+        document.getElementById('predict-btn').addEventListener('click', runPrediction);
+        document.getElementById('csv-file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || '';
+            document.getElementById('file-name').textContent = fileName;
+        });
+        document.getElementById('download-btn').addEventListener('click', function() {
+            if (downloadUrl) {
+                window.location.href = downloadUrl;
+            }
+        });
+
+        // Load models on page load
+        loadModels();
+    </script>
+</body>
+</html>

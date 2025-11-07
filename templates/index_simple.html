@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Spoofing Detection Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #111827;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        /* Card */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Model Grid */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .model-item {
+            padding: 16px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .model-item:hover {
+            border-color: var(--primary);
+            background: #f0f4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .model-item.selected {
+            border-color: var(--primary);
+            background: #f0f4ff;
+            font-weight: 600;
+        }
+
+        .model-item.loaded {
+            border-color: var(--success);
+            background: #ecfdf5;
+        }
+
+        .model-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Button */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Form */
+        .form-group {
+            margin: 16px 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .form-group input[type="number"] {
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            width: 200px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg);
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: #f0f4ff;
+        }
+
+        .file-upload.active {
+            border-color: var(--success);
+            background: #ecfdf5;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            opacity: 0.95;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        tr:hover {
+            background: var(--bg);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-benign {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-malicious {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            border-left: 4px solid var(--success);
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border-left: 4px solid var(--danger);
+            color: #991b1b;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            margin: 20px auto;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ DNS Spoofing Detection</h1>
+            <p>Advanced threat detection powered by LightGBM machine learning</p>
+        </div>
+
+        <div id="alerts"></div>
+
+        <!-- Model Selection -->
+        <div class="card">
+            <div class="card-header">
+                📊 Step 1: Select Model
+            </div>
+            <div class="model-grid" id="model-grid">
+                <!-- Models will be loaded here -->
+            </div>
+            <div class="mt-20">
+                <button class="btn btn-primary" id="load-model-btn" disabled>
+                    Load Selected Model
+                </button>
+            </div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="card">
+            <div class="card-header">
+                📁 Step 2: Upload DNS Traffic Data
+            </div>
+            
+            <div class="file-upload" id="file-upload">
+                <input type="file" id="csv-file" accept=".csv" />
+                <div class="file-upload-content">
+                    <div style="font-size: 3em; margin-bottom: 16px;">📄</div>
+                    <div style="font-weight: 600; margin-bottom: 8px;">Click to upload or drag and drop</div>
+                    <div class="text-muted">CSV file with DNS traffic flows</div>
+                    <div id="file-name" class="mt-20" style="font-weight: 600; color: var(--success);"></div>
+                </div>
+            </div>
+
+            <div class="form-group mt-20">
+                <label for="max-rows">Maximum rows to process (optional):</label>
+                <input type="number" id="max-rows" placeholder="Leave empty for all rows" min="1" />
+            </div>
+
+            <div class="mt-20">
+                <button class="btn btn-success" id="predict-btn" disabled>
+                    🚀 Run Detection
+                </button>
+            </div>
+
+            <div class="spinner" id="spinner"></div>
+        </div>
+
+        <!-- Results -->
+        <div class="card hidden" id="results">
+            <div class="card-header">
+                📈 Detection Results
+            </div>
+            
+            <div class="stats-grid" id="stats-grid"></div>
+
+            <div class="mt-20">
+                <h3 style="margin-bottom: 12px;">Prediction Distribution</h3>
+                <div id="prediction-distribution"></div>
+            </div>
+
+            <div class="mt-20">
+                <h3 style="margin-bottom: 12px;">Sample Predictions (First 10 flows)</h3>
+                <div class="table-container" id="sample-predictions"></div>
+            </div>
+
+            <div class="mt-20">
+                <button class="btn btn-primary" id="download-btn">
+                    💾 Download Full Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedModel = null;
+        let loadedModel = null;
+        let downloadUrl = null;
+
+        // Load available models
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/models');
+                const data = await response.json();
+                const models = data.lightgbm || [];
+                
+                const container = document.getElementById('model-grid');
+                
+                if (models.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No LightGBM models found</p>';
+                    return;
+                }
+                
+                models.forEach(model => {
+                    const div = document.createElement('div');
+                    div.className = 'model-item';
+                    div.innerHTML = `
+                        ${model.name}
+                        <span class="model-badge">LightGBM</span>
+                    `;
+                    div.dataset.modelPath = model.path;
+                    div.dataset.modelName = model.name;
+                    
+                    div.addEventListener('click', () => selectModel(div, model));
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                showAlert('Error loading models: ' + error.message, 'error');
+            }
+        }
+
+        function selectModel(element, model) {
+            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            selectedModel = {
+                path: element.dataset.modelPath,
+                name: element.dataset.modelName
+            };
+            
+            document.getElementById('load-model-btn').disabled = false;
+        }
+
+        async function loadSelectedModel() {
+            if (!selectedModel) return;
+            
+            const btn = document.getElementById('load-model-btn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/load_model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model_path: selectedModel.path,
+                        model_name: selectedModel.name
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    loadedModel = selectedModel;
+                    showAlert('✓ ' + result.message, 'success');
+                    
+                    document.querySelector('.model-item.selected').classList.add('loaded');
+                    document.getElementById('predict-btn').disabled = false;
+                    
+                    btn.textContent = 'Model Loaded ✓';
+                    btn.style.background = 'var(--success)';
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Load Selected Model';
+                }
+            } catch (error) {
+                showAlert('Error loading model: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Load Selected Model';
+            }
+        }
+
+        // File upload
+        const fileUpload = document.getElementById('file-upload');
+        const fileInput = document.getElementById('csv-file');
+        
+        fileUpload.addEventListener('click', () => fileInput.click());
+        
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('active');
+        });
+        
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('active');
+        });
+        
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('active');
+            fileInput.files = e.dataTransfer.files;
+            updateFileName();
+        });
+        
+        fileInput.addEventListener('change', updateFileName);
+        
+        function updateFileName() {
+            const fileName = fileInput.files[0]?.name || '';
+            document.getElementById('file-name').textContent = fileName || '';
+        }
+
+        async function runPrediction() {
+            if (!fileInput.files[0]) {
+                showAlert('Please select a CSV file', 'error');
+                return;
+            }
+            
+            if (!loadedModel) {
+                showAlert('Please load a model first', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('model_name', loadedModel.name);
+            
+            const maxRows = document.getElementById('max-rows').value;
+            if (maxRows) formData.append('max_rows', maxRows);
+            
+            document.getElementById('spinner').classList.add('show');
+            document.getElementById('predict-btn').disabled = true;
+            document.getElementById('results').classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    displayResults(result);
+                    downloadUrl = result.download_url;
+                    showAlert('✓ Detection completed successfully!', 'success');
+                } else {
+                    showAlert('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error during prediction: ' + error.message, 'error');
+            } finally {
+                document.getElementById('spinner').classList.remove('show');
+                document.getElementById('predict-btn').disabled = false;
+            }
+        }
+
+        function displayResults(result) {
+            const stats = result.statistics;
+            
+            // Statistics
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="label">Total Flows</div>
+                    <div class="value">${stats.total_flows.toLocaleString()}</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="label">Malicious Detected</div>
+                    <div class="value">${stats.malicious_detected.toLocaleString()}</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="label">Detection Rate</div>
+                    <div class="value">${stats.detection_rate.toFixed(2)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Latency</div>
+                    <div class="value">${stats.avg_latency_ms.toFixed(2)}ms</div>
+                </div>
+            `;
+            document.getElementById('stats-grid').innerHTML = statsHtml;
+            
+            // Prediction distribution
+            let distHtml = '<div style="background: var(--bg); padding: 16px; border-radius: 8px;">';
+            for (const [label, count] of Object.entries(result.prediction_distribution)) {
+                const percentage = (count/stats.total_flows*100).toFixed(2);
+                distHtml += `
+                    <div style="margin: 8px 0; padding: 12px; background: white; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600;">${label}</span>
+                        <span>${count.toLocaleString()} flows (${percentage}%)</span>
+                    </div>
+                `;
+            }
+            distHtml += '</div>';
+            document.getElementById('prediction-distribution').innerHTML = distHtml;
+            
+            // Sample predictions table
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Label</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            result.sample_predictions.forEach(pred => {
+                const badgeClass = pred.is_malicious ? 'badge-malicious' : 'badge-benign';
+                const status = pred.is_malicious ? 'MALICIOUS' : 'BENIGN';
+                
+                tableHtml += `
+                    <tr>
+                        <td>${pred.predicted_class}</td>
+                        <td>${pred.predicted_label}</td>
+                        <td>${(pred.confidence * 100).toFixed(2)}%</td>
+                        <td><span class="badge ${badgeClass}">${status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += '</tbody></table>';
+            document.getElementById('sample-predictions').innerHTML = tableHtml;
+            
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function showAlert(message, type) {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        // Event listeners
+        document.getElementById('load-model-btn').addEventListener('click', loadSelectedModel);
+        document.getElementById('predict-btn').addEventListener('click', runPrediction);
+        document.getElementById('download-btn').addEventListener('click', () => {
+            if (downloadUrl) window.location.href = downloadUrl;
+        });
+
+        // Load models on page load
+        loadModels();
+    </script>
+</body>
+</html>

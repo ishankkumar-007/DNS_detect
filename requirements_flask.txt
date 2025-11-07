@@ -1,0 +1,11 @@
+# Flask Web App Requirements
+# Additional dependencies for the web interface
+
+# Core web framework
+flask==3.0.0
+
+# File handling
+werkzeug==3.0.1
+
+# For CORS if needed
+flask-cors==4.0.0

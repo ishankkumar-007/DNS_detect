@@ -81,7 +81,12 @@ class RealTimeDNSDetector:
                 df[feature] = 0
         
         # Select only required features in correct order
-        df = df[self.feature_names]
+        df = df[self.feature_names].copy()
+        
+        # Convert any non-numeric columns to numeric
+        for col in df.columns:
+            if df[col].dtype == 'object' or df[col].dtype.name == 'category':
+                df[col] = pd.to_numeric(df[col], errors='coerce')
         
         # Handle any NaN values
         df = df.fillna(0)

@@ -475,10 +475,6 @@ This project supports research in:
 - **Model comparison** for cybersecurity
 - **Real-time threat detection** systems
 
-## 📄 License
-
-Research project - see institutional guidelines.
-
 ## ✅ Key Features
 
 ✅ **6 detection models** (supervised, unsupervised, deep learning, ensemble)  
